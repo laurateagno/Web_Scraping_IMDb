@@ -1,0 +1,95 @@
+
+# Carga del paquete rvest para el scraping
+install.packages("rvest")
+library('rvest')
+
+# url de IMDb España - películas más populares en España
+imdb_url <- 'http://www.imdb.com/search/title?countries=es&sort=moviemeter,asc&page=1&ref_=adv_prv'
+webpage <- read_html(imdb_url)
+
+# Scraping de los contenidos de la página web por elemento CSS.
+# 1. Posición en la clasífica
+posicion_html <- html_nodes(webpage,'.text-primary')
+posicion <- html_text(posicion_html)
+posicion <-as.numeric(posicion)
+head(posicion)
+length(posicion)
+
+# 2. Título de la película
+titulo_html <- html_nodes(webpage,'.lister-item-header a')
+titulo <- html_text(titulo_html)
+head(titulo)
+length(titulo)
+
+# 3. Duración de la película
+duracion_html <- html_nodes(webpage,'.text-muted .runtime')
+duracion <- html_text(duracion_html)
+duracion <-gsub(" min","",duracion)
+duracion <-as.numeric(duracion)
+head(duracion)
+length(duracion)
+duracion <- c( c('NA'), duracion)
+head(duracion)
+length(duracion)
+
+# 4. Género de la película
+genero_html <- html_nodes(webpage,'.genre')
+genero <- html_text(genero_html)
+genero <- gsub("\n","",genero)
+genero <- gsub(" ","",genero)
+genero <- gsub(",.*","",genero)
+genero <- as.factor(genero)
+head(genero)
+length(genero)
+
+# 5. Rating de la película
+rating_html <- html_nodes(webpage,'.ratings-imdb-rating strong')
+rating <- html_text(rating_html)
+rating <- as.numeric(rating)
+head(rating)
+length(rating)
+rating <- c( c('NA'), rating)
+head(rating)
+length(rating)
+
+# 6. Número de votos por película
+votos_html <- html_nodes(webpage,'.sort-num_votes-visible span:nth-child(2)')
+votos <- html_text(votos_html)
+votos <- gsub(",","",votos)
+votos <- as.numeric(votos)
+head(votos)
+length(votos)
+votos <- c( c('NA'), votos)
+head(votos)
+length(votos)
+
+# 7. Director/es de la película
+director_html <- html_nodes(webpage,'.text-muted+ p a:nth-child(1)')
+director <- html_text(director_html)
+director[27] <- NA
+director[35] <- NA
+director[50] <- NA
+director <- as.factor(director)
+head(director)
+length(director)
+
+# 8. Actores de la película
+actores_html <- html_nodes(webpage,'.lister-item-content .ghost+ a')
+actores <- html_text(actores_html)
+actores <- c( actores[1:26], c('Jude Law'), actores[27:33], c('Paula Echevarría'), actores[34:length(actores)], c('Maggie Civantos'))
+actores <- as.factor(actores)
+head(actores)
+length(actores)
+
+# Construcción del dataset "peli_df"
+peli_df<-data.frame(Posicion = posicion, Titulo = titulo,
+                      Duracion = duracion, Genero = genero, 
+                      Rating = rating, Votos = votos,                                                             
+                      Director = director, Actor = actores)
+
+# Verificar estructura del dataframe "peli_df"
+str(peli_df)
+
+# Exportación del fichero peli_df en formato csv.
+write.csv(peli_df, file = "/Users/laurateagno/Desktop/Peliculas.csv", row.names = FALSE, fileEncoding = "UTF-8")
+
